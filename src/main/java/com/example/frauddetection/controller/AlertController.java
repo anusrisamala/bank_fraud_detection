@@ -5,10 +5,11 @@ import com.example.frauddetection.service.AlertService;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
+import java.util.Map;
 
 @RestController
 @RequestMapping("/api/alerts")
-@CrossOrigin
+@CrossOrigin(origins = "http://localhost:5173") // React frontend
 public class AlertController {
 
     private final AlertService alertService;
@@ -33,5 +34,12 @@ public class AlertController {
     @GetMapping("/by-rule/{rule}")
     public List<Alert> getAlertsByRule(@PathVariable String rule) {
         return alertService.getAlertsByRule(rule);
+    }
+
+    // 4️⃣ GET /api/alerts/recent
+    // Used by Dashboard table
+    @GetMapping("/recent")
+    public List<Map<String, Object>> getRecentAlerts() {
+        return alertService.getRecentAlerts();
     }
 }

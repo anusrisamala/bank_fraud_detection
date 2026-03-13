@@ -1,11 +1,7 @@
 package com.example.frauddetection.model;
-import jakarta.persistence.*;
 
-@Entity
-@Table(name = "alerts")
 public class Alert {
-    @Id
-    @GeneratedValue(strategy = GenerationType.IDENTITY)
+
     private int alertId;
     private Long transactionId;
     private String senderId;
