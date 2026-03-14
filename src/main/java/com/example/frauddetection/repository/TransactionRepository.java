@@ -341,4 +341,37 @@ public class TransactionRepository {
             return row;
         });
     }
+    public long countTotalTransactions() {
+
+        String sql = "SELECT COUNT(*) FROM transactions";
+
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+
+        return count != null ? count : 0;
+    }
+    public long countFraudTransactions() {
+
+        String sql = "SELECT COUNT(*) FROM transactions WHERE fraud_flag = true";
+
+        Long count = jdbcTemplate.queryForObject(sql, Long.class);
+
+        return count != null ? count : 0;
+    }
+    public Map<String, Long> countTransactionsByLocation() {
+
+        String sql = """
+            SELECT location, COUNT(*) as count
+            FROM transactions
+            GROUP BY location
+            ORDER BY count DESC
+            """;
+
+        Map<String, Long> result = new HashMap<>();
+
+        jdbcTemplate.query(sql, rs -> {
+            result.put(rs.getString("location"), rs.getLong("count"));
+        });
+
+        return result;
+    }
 }
