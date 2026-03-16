@@ -374,4 +374,121 @@ public class TransactionRepository {
 
         return result;
     }
+    // TRANSACTIONS PAGE - FILTER + PAGINATION
+    public List<Transaction> findTransactionsWithFilters(
+            String search,
+            Double minAmount,
+            Double maxAmount,
+            String location,
+            String fraudStatus,
+            int limit,
+            int offset
+    ) {
+
+        StringBuilder sql = new StringBuilder("SELECT * FROM transactions WHERE 1=1 ");
+        new Object() {}; // just to separate visually
+
+        List<Object> params = new java.util.ArrayList<>();
+
+        if (search != null && !search.isBlank()) {
+            sql.append(" AND (transaction_id LIKE ? OR sender_id LIKE ? OR receiver_id LIKE ?)");
+            String searchValue = "%" + search + "%";
+            params.add(searchValue);
+            params.add(searchValue);
+            params.add(searchValue);
+        }
+
+        if (minAmount != null) {
+            sql.append(" AND amount >= ?");
+            params.add(minAmount);
+        }
+
+        if (maxAmount != null) {
+            sql.append(" AND amount <= ?");
+            params.add(maxAmount);
+        }
+
+        if (location != null && !location.isBlank()) {
+            sql.append(" AND location = ?");
+            params.add(location);
+        }
+
+        if (fraudStatus != null) {
+            if (fraudStatus.equalsIgnoreCase("NORMAL")) {
+                sql.append(" AND fraud_flag = false");
+            } else if (fraudStatus.equalsIgnoreCase("FRAUD")) {
+                sql.append(" AND fraud_flag = true");
+            }
+        }
+
+        sql.append(" ORDER BY timestamp DESC LIMIT ? OFFSET ?");
+        params.add(limit);
+        params.add(offset);
+
+        return jdbcTemplate.query(sql.toString(), (rs, rowNum) -> {
+
+            Transaction t = new Transaction();
+
+            t.setTransactionId(rs.getLong("transaction_id"));
+            t.setSenderId(rs.getString("sender_id"));
+            t.setReceiverId(rs.getString("receiver_id"));
+            t.setAmount(rs.getDouble("amount"));
+            t.setTimestamp(rs.getString("timestamp"));
+            t.setLocation(rs.getString("location"));
+            t.setDeviceId(rs.getString("device_id"));
+            t.setMerchantName(rs.getString("merchant_name"));
+            t.setTransactionType(rs.getString("transaction_type"));
+            t.setStatus(rs.getString("status"));
+            t.setRiskScore(rs.getInt("risk_score"));
+            t.setFraudFlag(rs.getBoolean("fraud_flag"));
+            t.setMlProbability(rs.getDouble("ml_probability"));
+            t.setRuleScore(rs.getInt("rule_score"));
+            t.setTxnGap(rs.getLong("txn_gap"));
+
+            return t;
+
+        }, params.toArray());
+    }
+    // TRANSACTION DETAIL BY ID
+    public Transaction findByTransactionId(Long transactionId) {
+
+        String sql = "SELECT * FROM transactions WHERE transaction_id = ?";
+
+        return jdbcTemplate.queryForObject(sql, (rs, rowNum) -> {
+
+            Transaction t = new Transaction();
+
+            t.setTransactionId(rs.getLong("transaction_id"));
+            t.setSenderId(rs.getString("sender_id"));
+            t.setReceiverId(rs.getString("receiver_id"));
+            t.setAmount(rs.getDouble("amount"));
+            t.setTimestamp(rs.getString("timestamp"));
+            t.setLocation(rs.getString("location"));
+            t.setDeviceId(rs.getString("device_id"));
+            t.setMerchantName(rs.getString("merchant_name"));
+            t.setTransactionType(rs.getString("transaction_type"));
+            t.setStatus(rs.getString("status"));
+            t.setRiskScore(rs.getInt("risk_score"));
+            t.setFraudFlag(rs.getBoolean("fraud_flag"));
+            t.setMlProbability(rs.getDouble("ml_probability"));
+            t.setRuleScore(rs.getInt("rule_score"));
+            t.setTxnGap(rs.getLong("txn_gap"));
+
+            return t;
+
+        }, transactionId);
+    }
+    // TODAY TRANSACTIONS COUNT
+    public int countTodayTransactions() {
+
+        String sql = """
+            SELECT COUNT(*)
+            FROM transactions
+            WHERE DATE(timestamp) = CURDATE()
+            """;
+
+        Integer count = jdbcTemplate.queryForObject(sql, Integer.class);
+
+        return count != null ? count : 0;
+    }
 }
